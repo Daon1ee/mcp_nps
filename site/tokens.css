@@ -1,0 +1,66 @@
+/* Design tokens for the DC National Parks site — the single source of truth.
+   Rules for using them live in .claude/skills/site-style-guide/. */
+
+:root {
+  /* Surface & text */
+  --ink: #14213d;          /* body text, headings */
+  --ink-soft: #4a5570;     /* secondary text */
+  --paper: #faf7f2;        /* page background (marble cream) */
+  --card: #ffffff;         /* raised surfaces */
+  --line: #e6dfd3;         /* borders, dividers, image placeholders */
+
+  /* Accents */
+  --blossom: #c2577a;      /* primary accent: links, dates, active states (cherry blossom) */
+  --blossom-soft: #f6dde5; /* tinted backgrounds for blossom */
+  --moss: #3d5a4c;         /* secondary accent: designations, facts labels, dataset publisher */
+  --gold: #b8892b;         /* reserved; not used on the page yet */
+
+  /* Status */
+  --alert: #9a3412;        /* closures, warnings */
+  --alert-bg: #fdefe4;
+
+  /* Over photography — fixed, do not flip in dark mode */
+  --on-photo: #ffffff;
+  --on-photo-soft: #e7ebf5;
+  --on-photo-accent: #f6b8cd;
+  --scrim-rgb: 10, 18, 40;                 /* used as rgba(var(--scrim-rgb), a) */
+  --hero-fallback: #14213d;                /* behind the hero photo while it loads */
+  --glass: rgba(255, 255, 255, .14);
+  --glass-line: rgba(255, 255, 255, .28);
+  --glass-solid: rgba(255, 255, 255, .92); /* dialog close button */
+  --on-glass-solid: #14213d;
+  --credit: rgba(255, 255, 255, .7);
+
+  /* Map markers (read from JS via getComputedStyle) */
+  --marker-featured: var(--blossom);
+  --marker-default: var(--moss);
+  --marker-ring: #ffffff;
+
+  /* Shape & depth */
+  --radius: 14px;          /* cards, panels */
+  --radius-lg: 18px;       /* dialog */
+  --radius-sm: 10px;       /* small tiles, thumbnails */
+  --radius-pill: 999px;    /* chips, stats, buttons, search */
+  --shadow: 0 1px 2px rgba(20, 33, 61, .06), 0 8px 24px rgba(20, 33, 61, .07);
+  --shadow-dialog: 0 24px 80px rgba(0, 0, 0, .4);
+  --shadow-float: 0 2px 8px rgba(0, 0, 0, .3);   /* small controls floating over photos */
+
+  /* Layout */
+  --wrap: 1120px;          /* max content width */
+  --gutter: 16px;          /* minimum side margin on phones */
+  --nav-h: 56px;
+
+  /* Type */
+  --serif: "Fraunces", Georgia, serif;                              /* headings, big numbers */
+  --sans: "Inter", system-ui, -apple-system, sans-serif;            /* everything else */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #eef1f8; --ink-soft: #a9b3c9; --paper: #0f1626; --card: #172038; --line: #263252;
+    --blossom: #ee8fb0; --blossom-soft: #3a2233; --moss: #8fc1a8; --gold: #e0b45a;
+    --alert: #ffb98a; --alert-bg: #3a2418;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .3);
+    --marker-ring: #172038;
+  }
+}
