@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Washington, D.C. National Parks</title>
+<meta name="description" content="A one-page guide to the National Park Service sites in Washington, D.C. — live alerts, events and open data pulled through MCP servers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root {
+    --ink: #14213d;
+    --ink-soft: #4a5570;
+    --paper: #faf7f2;
+    --card: #ffffff;
+    --line: #e6dfd3;
+    --blossom: #c2577a;
+    --blossom-soft: #f6dde5;
+    --moss: #3d5a4c;
+    --gold: #b8892b;
+    --alert: #9a3412;
+    --alert-bg: #fdefe4;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(20,33,61,.06), 0 8px 24px rgba(20,33,61,.07);
+    --serif: "Fraunces", Georgia, serif;
+    --sans: "Inter", system-ui, -apple-system, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #eef1f8; --ink-soft: #a9b3c9; --paper: #0f1626; --card: #172038; --line: #263252;
+      --blossom: #ee8fb0; --blossom-soft: #3a2233; --moss: #8fc1a8; --gold: #e0b45a;
+      --alert: #ffb98a; --alert-bg: #3a2418;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.3);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 400 16px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+  img { max-width: 100%; display: block; }
+  a { color: var(--blossom); text-underline-offset: 3px; }
+  a:hover { text-decoration-thickness: 2px; }
+  :focus-visible { outline: 3px solid var(--blossom); outline-offset: 2px; border-radius: 4px; }
+  .wrap { width: min(1120px, 100% - 32px); margin-inline: auto; }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 700; line-height: 1.15; margin: 0; letter-spacing: -.01em; }
+  h2 { font-size: clamp(1.7rem, 3.4vw, 2.3rem); }
+  .eyebrow { font: 600 .75rem/1 var(--sans); text-transform: uppercase; letter-spacing: .14em; color: var(--blossom); margin-bottom: 10px; display: block; }
+  section { padding: 72px 0 8px; }
+  .sec-head { margin-bottom: 28px; max-width: 62ch; }
+  .sec-head p { color: var(--ink-soft); margin: 10px 0 0; }
+
+  /* nav */
+  nav.top { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(12px); background: color-mix(in srgb, var(--paper) 82%, transparent); border-bottom: 1px solid var(--line); }
+  nav.top .wrap { display: flex; align-items: center; gap: 24px; height: 56px; }
+  nav.top .brand { font: 700 1.05rem var(--serif); color: var(--ink); text-decoration: none; white-space: nowrap; }
+  nav.top ul { display: flex; gap: 20px; list-style: none; margin: 0 0 0 auto; padding: 0; overflow-x: auto; scrollbar-width: none; }
+  nav.top a.l { color: var(--ink-soft); text-decoration: none; font-size: .9rem; font-weight: 500; white-space: nowrap; }
+  nav.top a.l:hover { color: var(--blossom); }
+
+  /* hero */
+  .hero { position: relative; color: #fff; min-height: min(78vh, 640px); display: grid; align-items: end; background: #14213d center/cover no-repeat; isolation: isolate; }
+  .hero::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,18,40,.25) 0%, rgba(10,18,40,.55) 55%, rgba(10,18,40,.88) 100%); z-index: -1; }
+  .hero .wrap { padding: 96px 0 44px; }
+  .hero h1 { font-size: clamp(2.4rem, 7vw, 4.6rem); max-width: 16ch; }
+  .hero h1 em { font-style: normal; color: #f6b8cd; }
+  .hero p.lead { font-size: clamp(1.05rem, 2vw, 1.25rem); max-width: 52ch; margin: 18px 0 28px; color: #e7ebf5; }
+  .stats { display: flex; flex-wrap: wrap; gap: 12px; }
+  .stat { background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.28); backdrop-filter: blur(8px); border-radius: 999px; padding: 8px 16px; font-size: .92rem; }
+  .stat b { font-family: var(--serif); font-size: 1.15rem; margin-right: 6px; }
+  .credit { position: absolute; right: 16px; bottom: 8px; font-size: .7rem; color: rgba(255,255,255,.7); }
+
+  /* alerts */
+  .alerts { background: var(--alert-bg); border: 1px solid color-mix(in srgb, var(--alert) 30%, transparent); border-radius: var(--radius); padding: 6px 18px; }
+  .alerts details { border-bottom: 1px solid color-mix(in srgb, var(--alert) 20%, transparent); }
+  .alerts details:last-child { border: 0; }
+  .alerts summary { cursor: pointer; padding: 12px 0; font-weight: 600; color: var(--alert); list-style: none; display: flex; gap: 10px; align-items: baseline; }
+  .alerts summary::-webkit-details-marker { display: none; }
+  .alerts summary::before { content: "▸"; transition: transform .15s; }
+  .alerts details[open] summary::before { transform: rotate(90deg); }
+  .alerts .park-tag { margin-left: auto; font-weight: 500; font-size: .78rem; color: var(--ink-soft); white-space: nowrap; }
+  .alerts p { margin: 0 0 14px 22px; color: var(--ink); font-size: .95rem; }
+
+  /* featured cards */
+  .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; text-align: left; font: inherit; color: inherit; padding: 0; cursor: pointer; transition: transform .18s, box-shadow .18s; }
+  .card:hover { transform: translateY(-3px); }
+  .card .ph { aspect-ratio: 16/10; background: var(--line); overflow: hidden; }
+  .card .ph img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
+  .card:hover .ph img { transform: scale(1.04); }
+  .card .body { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .card .desig { font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--moss); }
+  .card h3 { font-size: 1.3rem; }
+  .card p { margin: 0; color: var(--ink-soft); font-size: .93rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .card .more { margin-top: auto; padding-top: 6px; color: var(--blossom); font-weight: 600; font-size: .88rem; }
+
+  /* map */
+  #map { height: 460px; border-radius: var(--radius); border: 1px solid var(--line); box-shadow: var(--shadow); z-index: 1; }
+  .leaflet-popup-content { font: 400 .88rem/1.45 var(--sans); }
+  .leaflet-popup-content b { font-family: var(--serif); font-size: 1rem; }
+
+  /* events */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .chip { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 6px 14px; font: 500 .85rem var(--sans); cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .events { display: grid; gap: 12px; }
+  .event { display: grid; grid-template-columns: 76px 1fr; gap: 18px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
+  .date { text-align: center; background: var(--blossom-soft); color: var(--blossom); border-radius: 10px; padding: 8px 4px; align-self: start; }
+  .date .m { display: block; font: 600 .7rem var(--sans); text-transform: uppercase; letter-spacing: .1em; }
+  .date .d { display: block; font: 700 1.7rem/1.1 var(--serif); }
+  .event h3 { font-size: 1.1rem; font-family: var(--sans); font-weight: 600; }
+  .event .meta { font-size: .82rem; color: var(--ink-soft); margin: 2px 0 6px; }
+  .event p { margin: 0; font-size: .92rem; color: var(--ink-soft); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .btn { display: inline-block; margin-top: 18px; border: 1px solid var(--ink); background: transparent; color: var(--ink); padding: 10px 20px; border-radius: 999px; font: 600 .9rem var(--sans); cursor: pointer; }
+  .btn:hover { background: var(--ink); color: var(--paper); }
+
+  /* directory */
+  .search { width: 100%; max-width: 420px; padding: 12px 16px; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; font: 400 1rem var(--sans); margin-bottom: 20px; }
+  .dir { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+  .dir a { display: grid; grid-template-columns: 72px 1fr; gap: 12px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px; text-decoration: none; color: var(--ink); }
+  .dir a:hover { border-color: var(--blossom); }
+  .dir img, .dir .noimg { width: 72px; height: 72px; border-radius: 8px; object-fit: cover; background: var(--line); }
+  .dir b { font: 600 .95rem/1.3 var(--sans); display: block; }
+  .dir span { font-size: .78rem; color: var(--ink-soft); }
+  .empty { color: var(--ink-soft); padding: 12px 0; }
+
+  /* datasets */
+  .datasets { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+  .ds { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; }
+  .ds h3 { font: 600 1.02rem/1.3 var(--sans); }
+  .ds h3 a { color: var(--ink); text-decoration: none; }
+  .ds h3 a:hover { color: var(--blossom); text-decoration: underline; }
+  .ds .pub { font-size: .78rem; color: var(--moss); font-weight: 600; }
+  .ds p { margin: 0; font-size: .88rem; color: var(--ink-soft); }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 4px; }
+  .tag { font-size: .72rem; background: var(--blossom-soft); color: var(--blossom); padding: 2px 9px; border-radius: 999px; }
+  .tag.fmt { background: color-mix(in srgb, var(--moss) 16%, transparent); color: var(--moss); }
+
+  /* built-with */
+  .mcp { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .mcp .srv { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; }
+  .mcp h3 { font: 600 1rem var(--sans); }
+  .mcp code { font: 500 .78rem ui-monospace, Menlo, monospace; background: var(--blossom-soft); color: var(--blossom); padding: 2px 8px; border-radius: 6px; display: inline-block; margin: 3px 4px 0 0; }
+  .mcp .srv p { margin: 8px 0 0; font-size: .85rem; color: var(--ink-soft); }
+  footer { margin-top: 72px; padding: 32px 0 48px; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: .85rem; }
+
+  /* dialog */
+  dialog { border: 0; padding: 0; border-radius: 18px; width: min(860px, 100% - 24px); max-height: calc(100vh - 32px); background: var(--card); color: var(--ink); box-shadow: 0 24px 80px rgba(0,0,0,.4); }
+  dialog::backdrop { background: rgba(10,18,40,.6); backdrop-filter: blur(3px); }
+  .dlg-head { position: relative; }
+  .gallery { display: grid; grid-template-columns: 2fr 1fr; gap: 3px; background: var(--line); }
+  .gallery img { width: 100%; height: 100%; object-fit: cover; }
+  .gallery img:first-child { grid-row: span 2; aspect-ratio: 4/3; }
+  .gallery.solo { grid-template-columns: 1fr; }
+  .close { position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,.92); color: #14213d; font-size: 1.3rem; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+  .dlg-body { padding: 24px 28px 30px; display: grid; gap: 20px; }
+  .dlg-body h2 { font-size: 1.9rem; }
+  .facts { display: grid; gap: 14px 24px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .facts h4 { margin: 0 0 4px; font: 600 .72rem var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--moss); }
+  .facts p { margin: 0; font-size: .92rem; color: var(--ink-soft); }
+  .vc { margin: 0; padding-left: 18px; font-size: .92rem; color: var(--ink-soft); }
+  .imgcredit { font-size: .7rem; color: var(--ink-soft); }
+
+  @media (max-width: 640px) {
+    section { padding-top: 56px; }
+    nav.top .brand { display: none; }
+    nav.top ul { margin: 0; }
+    .grid, .datasets { grid-template-columns: 1fr; }
+    .event { grid-template-columns: 60px 1fr; gap: 12px; }
+    .gallery { grid-template-columns: 1fr 1fr; }
+    .gallery img:first-child { grid-column: span 2; grid-row: auto; }
+    .gallery img:nth-child(n+4) { display: none; }
+    .dlg-body { padding: 20px; }
+    #map { height: 360px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+
+<nav class="top" aria-label="Sections">
+  <div class="wrap">
+    <a class="brand" href="#top">DC National Parks</a>
+    <ul>
+      <li><a class="l" href="#featured">Featured</a></li>
+      <li><a class="l" href="#map-sec">Map</a></li>
+      <li><a class="l" href="#events">Events</a></li>
+      <li><a class="l" href="#all">All sites</a></li>
+      <li><a class="l" href="#data">Open data</a></li>
+      <li><a class="l" href="#built">How it's built</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <span class="eyebrow" style="color:#f6b8cd">National Park Service · Washington, D.C.</span>
+    <h1>The nation's capital is also a <em>national park</em>.</h1>
+    <p class="lead">From the memorials on the Mall to the wooded valleys of Rock Creek, 36 National Park Service sites sit inside the District. Here is what's open, what's happening, and what the data says.</p>
+    <div class="stats" id="stats" aria-label="At a glance"></div>
+  </div>
+  <span class="credit" id="hero-credit"></span>
+</header>
+
+<main class="wrap">
+  <section id="alerts" aria-labelledby="alerts-h" hidden>
+    <div class="sec-head"><span class="eyebrow">Before you go</span><h2 id="alerts-h">Current alerts</h2></div>
+    <div class="alerts" id="alerts-list"></div>
+  </section>
+
+  <section id="featured" aria-labelledby="featured-h">
+    <div class="sec-head">
+      <span class="eyebrow">Start here</span>
+      <h2 id="featured-h">Six places to begin</h2>
+      <p>Tap a card for hours, fees, directions and visitor centers.</p>
+    </div>
+    <div class="grid" id="featured-grid"></div>
+  </section>
+
+  <section id="map-sec" aria-labelledby="map-h">
+    <div class="sec-head"><span class="eyebrow">Find your way</span><h2 id="map-h">Every NPS site in the District</h2></div>
+    <div id="map" role="application" aria-label="Map of National Park Service sites in Washington, D.C."></div>
+  </section>
+
+  <section id="events" aria-labelledby="events-h">
+    <div class="sec-head">
+      <span class="eyebrow">Next 60 days</span>
+      <h2 id="events-h">Ranger programs &amp; events</h2>
+    </div>
+    <div class="chips" id="event-chips" role="group" aria-label="Filter events by park"></div>
+    <div class="events" id="event-list" aria-live="polite"></div>
+    <button class="btn" id="more-events" hidden>Show more</button>
+  </section>
+
+  <section id="all" aria-labelledby="all-h">
+    <div class="sec-head"><span class="eyebrow">Directory</span><h2 id="all-h">All sites</h2></div>
+    <input class="search" id="search" type="search" placeholder="Search parks, memorials, trails…" aria-label="Search sites">
+    <div class="dir" id="dir"></div>
+  </section>
+
+  <section id="data" aria-labelledby="data-h">
+    <div class="sec-head">
+      <span class="eyebrow">Data.gov</span>
+      <h2 id="data-h">Open datasets about DC's parks</h2>
+      <p>Cherry-tree inventories, boundary files, parking, water quality — public data you can download and map yourself.</p>
+    </div>
+    <div class="datasets" id="datasets"></div>
+  </section>
+
+  <section id="built" aria-labelledby="built-h">
+    <div class="sec-head">
+      <span class="eyebrow">Under the hood</span>
+      <h2 id="built-h">Built with three MCP servers</h2>
+      <p>A build script connects to each server as an MCP client and saves what they return; this page just renders it. No API key ever reaches your browser.</p>
+    </div>
+    <div class="mcp" id="mcp"></div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p id="foot"></p>
+    <p>Park information and photos courtesy of the U.S. National Park Service. Datasets from Data.gov. This is an independent student project, not an official NPS site.</p>
+  </div>
+</footer>
+
+<dialog id="dlg" aria-labelledby="dlg-title">
+  <div class="dlg-head"><div class="gallery" id="dlg-gallery"></div><button class="close" id="dlg-close" aria-label="Close">×</button></div>
+  <div class="dlg-body" id="dlg-body"></div>
+</dialog>
+
+<script src="data.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(() => {
+  const D = window.DC_DATA;
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const safeUrl = (u) => (/^https?:\/\//.test(u || "") ? esc(u) : "#");
+  const parkName = Object.fromEntries(D.parks.map((p) => [p.code, p.name]));
+  const shortName = (c) => ({ nama: "National Mall", rocr: "Rock Creek", whho: "White House", this: "Roosevelt Island", frdo: "Douglass", keaq: "Kenilworth" }[c] || parkName[c] || c);
+  const fmtDate = (iso) => new Date(iso + "T12:00:00");
+
+  // hero
+  const heroImg = D.featured[0]?.images[0];
+  if (heroImg) {
+    $("top").style.backgroundImage = `url("${heroImg.url}")`;
+    $("hero-credit").textContent = `Photo: ${heroImg.credit || "NPS"}`;
+  }
+  $("stats").innerHTML = [
+    [D.parks.length, "NPS sites in DC"],
+    [D.alerts.length, "active alerts"],
+    [D.events.length, "upcoming programs"],
+  ].map(([n, l]) => `<span class="stat"><b>${n}</b>${l}</span>`).join("");
+
+  // alerts
+  if (D.alerts.length) {
+    $("alerts").hidden = false;
+    $("alerts-list").innerHTML = D.alerts.map((a) => `
+      <details><summary>${esc(a.title)}<span class="park-tag">${esc(shortName(a.park))}</span></summary>
+      <p>${esc(a.description)} ${a.url ? `<a href="${safeUrl(a.url)}" target="_blank" rel="noopener">More</a>` : ""}</p></details>`).join("");
+  }
+
+  // featured cards
+  $("featured-grid").innerHTML = D.featured.map((p, i) => `
+    <button class="card" data-i="${i}">
+      <div class="ph">${p.images[0] ? `<img src="${safeUrl(p.images[0].url)}" alt="${esc(p.images[0].alt)}" loading="lazy">` : ""}</div>
+      <div class="body">
+        <span class="desig">${esc(p.designation || "National Park Service")}</span>
+        <h3>${esc(p.name)}</h3>
+        <p>${esc(p.description)}</p>
+        <span class="more">Details →</span>
+      </div>
+    </button>`).join("");
+
+  // dialog
+  const dlg = $("dlg");
+  const open = (i) => {
+    const p = D.featured[i];
+    const vcs = D.visitorCenters.filter((v) => v.park === p.code);
+    const addr = p.address ? [p.address.line1, p.address.city, p.address.stateCode, p.address.postalCode].filter(Boolean).join(", ") : "";
+    $("dlg-gallery").className = "gallery" + (p.images.length < 2 ? " solo" : "");
+    $("dlg-gallery").innerHTML = p.images.slice(0, 3).map((im) => `<img src="${safeUrl(im.url)}" alt="${esc(im.alt)}">`).join("");
+    const fees = p.fees.length ? p.fees.map((f) => `${esc(f.title)}: ${Number(f.cost) ? "$" + esc(f.cost) : "Free"}`).join("<br>") : "No entrance fee";
+    $("dlg-body").innerHTML = `
+      <div><span class="eyebrow">${esc(p.designation || "National Park Service")}</span><h2 id="dlg-title">${esc(p.name)}</h2></div>
+      <p style="margin:0">${esc(p.description)}</p>
+      <div class="facts">
+        <div><h4>Hours</h4><p>${esc(p.hours) || "See park website"}</p></div>
+        <div><h4>Fees</h4><p>${fees}</p></div>
+        ${addr ? `<div><h4>Address</h4><p>${esc(addr)}</p></div>` : ""}
+        <div><h4>Weather</h4><p>${esc((p.weather || "").slice(0, 220))}${(p.weather || "").length > 220 ? "…" : ""}</p></div>
+        <div style="grid-column:1/-1"><h4>Getting there</h4><p>${esc((p.directions || "").slice(0, 420))}${(p.directions || "").length > 420 ? "…" : ""}</p></div>
+        ${vcs.length ? `<div style="grid-column:1/-1"><h4>Visitor centers</h4><ul class="vc">${vcs.map((v) => `<li>${v.url ? `<a href="${safeUrl(v.url)}" target="_blank" rel="noopener">${esc(v.name)}</a>` : esc(v.name)}</li>`).join("")}</ul></div>` : ""}
+      </div>
+      <div><a href="${safeUrl(p.url)}" target="_blank" rel="noopener">Official NPS page ↗</a>
+      <div class="imgcredit">Photos: ${esc([...new Set(p.images.map((i) => i.credit).filter(Boolean))].join(", ") || "NPS")}</div></div>`;
+    dlg.showModal();
+  };
+  $("featured-grid").addEventListener("click", (e) => { const c = e.target.closest(".card"); if (c) open(+c.dataset.i); });
+  $("dlg-close").addEventListener("click", () => dlg.close());
+  dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
+
+  // map
+  if (window.L) {
+    const map = L.map("map", { scrollWheelZoom: false }).setView([38.8977, -77.0365], 12);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: "© OpenStreetMap contributors" }).addTo(map);
+    const pts = [];
+    for (const p of D.parks) {
+      if (!isFinite(p.lat) || !isFinite(p.lng)) continue;
+      // Skip regional trails/parkways whose centroid falls far outside the District
+      if (Math.abs(p.lat - 38.9) > 0.15 || Math.abs(p.lng + 77.03) > 0.2) continue;
+      const feat = D.featured.some((f) => f.code === p.code);
+      L.circleMarker([p.lat, p.lng], { radius: feat ? 9 : 6, color: "#fff", weight: 2, fillColor: feat ? "#c2577a" : "#3d5a4c", fillOpacity: 1 })
+        .bindPopup(`<b>${esc(p.name)}</b><br>${esc(p.designation || "")}<br><a href="${safeUrl(p.url)}" target="_blank" rel="noopener">nps.gov ↗</a>`)
+        .addTo(map);
+      pts.push([p.lat, p.lng]);
+    }
+    if (pts.length) map.fitBounds(pts, { padding: [24, 24] });
+    map.on("focus", () => map.scrollWheelZoom.enable()); map.on("blur", () => map.scrollWheelZoom.disable());
+  } else {
+    $("map").innerHTML = '<p class="empty" style="padding:24px">Map unavailable offline.</p>';
+  }
+
+  // events
+  let filter = "all", shown = 8;
+  const codes = [...new Set(D.events.map((e) => e.park))];
+  $("event-chips").innerHTML = [["all", "All"], ...codes.map((c) => [c, shortName(c)])]
+    .map(([c, l]) => `<button class="chip" data-c="${c}" aria-pressed="${c === "all"}">${esc(l)}</button>`).join("");
+  const renderEvents = () => {
+    const list = D.events.filter((e) => filter === "all" || e.park === filter);
+    $("event-list").innerHTML = list.slice(0, shown).map((e) => {
+      const d = fmtDate(e.dates[0]);
+      const more = e.dates.length > 1 ? ` · +${e.dates.length - 1} more date${e.dates.length > 2 ? "s" : ""}` : "";
+      return `<article class="event"><div class="date" aria-hidden="true"><span class="m">${d.toLocaleString("en-US", { month: "short" })}</span><span class="d">${d.getDate()}</span></div>
+        <div><h3>${esc(e.title)}</h3>
+        <div class="meta">${esc(d.toLocaleDateString("en-US", { weekday: "long" }))}${more}${e.time ? " · " + esc(e.time) : ""} · ${esc(shortName(e.park))}</div>
+        <p>${esc(e.description)}</p></div></article>`;
+    }).join("") || '<p class="empty">No upcoming events for this park.</p>';
+    $("more-events").hidden = list.length <= shown;
+  };
+  $("event-chips").addEventListener("click", (e) => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    filter = b.dataset.c; shown = 8;
+    document.querySelectorAll(".chip").forEach((x) => x.setAttribute("aria-pressed", x === b));
+    renderEvents();
+  });
+  $("more-events").addEventListener("click", () => { shown += 8; renderEvents(); });
+  renderEvents();
+
+  // directory
+  const renderDir = (q = "") => {
+    const t = q.trim().toLowerCase();
+    const list = D.parks.filter((p) => !t || `${p.name} ${p.designation} ${p.description}`.toLowerCase().includes(t));
+    $("dir").innerHTML = list.map((p) => `<a href="${safeUrl(p.url)}" target="_blank" rel="noopener">
+      ${p.image ? `<img src="${safeUrl(p.image.url)}" alt="" loading="lazy">` : '<div class="noimg"></div>'}
+      <div><b>${esc(p.name)}</b><span>${esc(p.designation || "NPS site")}</span></div></a>`).join("") || '<p class="empty">No sites match that search.</p>';
+  };
+  $("search").addEventListener("input", (e) => renderDir(e.target.value));
+  renderDir();
+
+  // datasets
+  $("datasets").innerHTML = D.datasets.slice(0, 12).map((d) => `
+    <article class="ds"><span class="pub">${esc(d.publisher || "Data.gov")}</span>
+      <h3><a href="${safeUrl(d.url)}" target="_blank" rel="noopener">${esc(d.title)}</a></h3>
+      <p>${esc(d.summary)}${d.summary.length >= 240 ? "…" : ""}</p>
+      <div class="tags">${d.formats.map((f) => `<span class="tag fmt">${esc(f)}</span>`).join("")}${d.tags.slice(0, 3).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div></article>`).join("");
+
+  // how it's built
+  const blurb = {
+    nps_mcp: "Park roster cross-check and full detail for the six featured sites.",
+    nationalparks: "Photos, coordinates, alerts, events and visitor centers.",
+    datagov: "Open datasets about DC parks from the Data.gov catalog.",
+  };
+  $("mcp").innerHTML = Object.entries(D.mcp).map(([k, v]) => `
+    <div class="srv"><h3><a href="${safeUrl(v.repo)}" target="_blank" rel="noopener">${esc(k)}</a></h3>
+    <div>${v.calls.map((c) => `<code>${esc(c.tool)} ×${c.count}</code>`).join("")}</div><p>${esc(blurb[k])}</p></div>`).join("");
+  $("foot").textContent = `Data fetched ${new Date(D.generatedAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })} via MCP.`;
+})();
+</script>
+</body>
+</html>
